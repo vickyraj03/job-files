@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+
+
+<head>
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.css" type="text/css" rel="stylesheet">
+<style>
+.whole_wrapper {
+  background: rgba(0, 0, 0, .1);
+  width: 100%;
+  min-height: 100%;
+  padding:3%;
+  overflow-y: auto;
+  height: 100vh;
+}
+.whole_wrapper .each_card {
+   width: 95%;
+  align-items: center;
+  text-align: center;
+  display: flex;
+  padding: 10px;
+  background: white;
+  margin-top: 4%;
+  margin-left: 2%;
+  box-shadow: 0 2px 5px 0 rgba(0, 0, 0, 0.16), 0 2px 10px 0 rgba(0, 0, 0, 0.12);
+}
+.whole_wrapper .each_card .image_container {
+  text-align: left;
+}
+.whole_wrapper .each_card .image_container img {
+  width: 50%;
+  border-radius: 10px;
+}
+.whole_wrapper .each_card .right_contents_container {
+  display: flex;
+  flex-direction: column;
+}
+.whole_wrapper .each_card .right_contents_container .name_field {
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 30px;
+}
+.whole_wrapper .each_card .right_contents_container .email_field {
+  font-size: 22px;
+  line-height: 30px;
+}
+.container{max-width:1170px; margin:auto;}
+
+
+.messaging { padding: 0 0 50px 0;}
+.inbox_msg {
+  border: 1px solid #c4c4c4;
+  clear: both;
+  overflow: hidden;
+}
+.inbox_people {
+  background: #f8f8f8 none repeat scroll 0 0;
+  float: left;
+  overflow: hidden;
+  width: 40%; border-right:1px solid #c4c4c4;
+}
+.headind_srch{ padding:10px 29px 10px 20px; overflow:hidden; border-bottom:1px solid #c4c4c4;}
+.recent_heading {float: left; width:40%;}
+.recent_heading h4 {
+  color: #05728f;
+  font-size: 21px;
+  margin: auto;
+}
+.srch_bar input{ border:1px solid #cdcdcd; border-width:0 0 1px 0; width:50%; padding:2px 0 4px 6px; background:none;}
+.srch_bar .input-group-addon button {
+  background: rgba(0, 0, 0, 0) none repeat scroll 0 0;
+  border: medium none;
+  padding: 0;
+  color: #707070;
+  font-size: 18px;
+}
+.srch_bar .input-group-addon { margin: 0 0 0 -27px;}
+.inbox_chat {}
+
+.pageOverflow{
+  overflow: auto !important;
+}
+
+@media only screen and (max-width: 769px) {
+    .result {
+      margin-left: -3%;
+}
+
+  } 
+
+</style>
+</head>
+<body>
+<div class="messaging">
+ <div class="inbox_msg">
+  <div class="inbox_people ">
+     <div class="headind_srch">
+            <div class="recent_heading">
+              <h4>Recent</h4>
+            </div>
+            <div class="srch_bar">
+              <div class="stylish-input-group">
+                <input type="text" class="search-bar"  placeholder="Search" >
+                <span class="input-group-addon">
+                <button type="button"> <i class="fa fa-search" aria-hidden="true"></i> </button>
+                </span> </div>
+            </div>
+          </div>
+		   <div id="app">
+		<div class="whole_wrapper">
+
+		</div>
+	</div>
+
+
+         </div>
+        </div>
+      </div>
+
+<script>
+let page = 1;
+const last_page = 20;
+const pixel_offset = 200;
+const throttle = (callBack, delay) => {
+  let withinInterval;
+  return function() {
+    const args = arguments;
+    const context = this;
+    if (!withinInterval) {
+      callBack.call(context, args);
+      withinInterval = true;
+      setTimeout(() => (withinInterval = false), delay);
+    }
+  };
+};
+
+const httpRequestWrapper = (method, URL) => {
+  return new Promise((resolve, reject) => {
+    const xhr_obj = new XMLHttpRequest();
+    xhr_obj.responseType = "json";
+    xhr_obj.open(method, URL);
+    xhr_obj.onload = () => {
+      const data = xhr_obj.response;
+      resolve(data);
+    };
+    xhr_obj.onerror = () => {
+      reject("failed");
+    };
+    xhr_obj.send();
+  });
+};
+
+const getData = async (page_no = 1) => {
+  const data = await httpRequestWrapper(
+    "GET",
+    `https://randomuser.me/api/?page=${page_no}&results=10`
+  );
+
+  const {results} = data;
+  populateUI(results);
+};
+
+let handleLoad;
+
+let trottleHandler = () =>{throttle(handleLoad.call(this), 1000)};
+
+document.addEventListener("DOMContentLoaded", () => {
+  getData(1);
+  window.addEventListener("scroll", trottleHandler);
+});
+
+handleLoad =  () => {
+  if((window.innerHeight + window.scrollY) >= document.body.offsetHeight - pixel_offset){
+    page = page+1;
+    if(page<=last_page){
+      window.removeEventListener('scroll',trottleHandler)
+      getData(page)
+      .then((res)=>{
+        window.addEventListener('scroll',trottleHandler)
+      })
+    }
+  }
+}
+
+
+
+
+
+
+
+const populateUI = data => {
+  const container = document.querySelector('.whole_wrapper');
+  data && 
+  data.length && 
+  data
+  .map((each,index)=>{
+    const {name,email,picture} = each;
+    const {first} = name;
+    const {large} = picture;
+    container.innerHTML += 
+    `
+    <div class="each_card">
+      <div class="image_container">
+        <img src="${large}" alt="" />
+      </div>
+      <div class="right_contents_container">
+        <div class="name_field">${first}</div>
+        <div class="email_filed">${email}</div>
+      </div>
+    </div>
+    
+    `
+  })
+
+}
+</script>
+
+</body>
+</html>
